@@ -18,7 +18,11 @@ sub call {
             
             my $lh = $prefix->get_handle($lang);
             
+            use Data::Dumper;
+            warn "$lang=".Dumper $lh;
+            
             bless $lh, $prefix.'::'.$lang;
+
             $env->{'psgix.localize'} = $lh;
         }
     }
@@ -52,11 +56,21 @@ __END__
 
 =head1 SYNOPSIS
 
-[]
+# in psgi
+builder {
+    # blabla
+    enable "I18n", prefix => 'WOAx::App::Test::I18n';
+}
 
+# in controller
+my $localize = $self->get_env->{'psgix.localize'};
+if( $localize ) {
+    $res = $localize->loc('Version');
+}
+    
 =head1 DESCRIPTION
 
-[]
+Localization simple middlware for psgi woax application
 
 =head2 EXPORT
 

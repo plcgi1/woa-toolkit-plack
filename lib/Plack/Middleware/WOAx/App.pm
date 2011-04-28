@@ -26,7 +26,6 @@ sub call {
         else {
             croak($self->{service_provider}->error);
         }
-        warn $sp_class;
     }
     else {
         $sp_class = $self->{service_provider};
