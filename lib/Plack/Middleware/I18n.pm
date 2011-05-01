@@ -18,11 +18,11 @@ sub call {
             
             my $lh = $prefix->get_handle($lang);
             
-            use Data::Dumper;
-            warn "$lang=".Dumper $lh;
-            
             bless $lh, $prefix.'::'.$lang;
-
+            
+            use Data::Dumper;
+            print "$lang=".Dumper $lh;
+            
             $env->{'psgix.localize'} = $lh;
         }
     }

@@ -8,7 +8,6 @@ use POSIX;
 use FindBin qw($Bin);
 use lib (
     $Bin.'/../lib',
-	$Bin.'/../../core/lib',
 );
 use Plack::Middleware::WOAx::App;
 use WOAx::App::Test::REST::Simple::SP;
