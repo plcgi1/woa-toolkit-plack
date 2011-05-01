@@ -12,38 +12,41 @@ our $DEFAULT_COOKIE_NAME = 'prj';
 our $DEFAULT_PARAM_NAME  = 'prj';
 
 sub call {
-    my ($self,$env)  = @_;
-    
-    my $req = Plack::Request->new($env);
-    my $config = $self->config;
+    my ( $self, $env ) = @_;
+
+    my $req         = Plack::Request->new($env);
+    my $config      = $self->config;
     my $cookie_name = $self->_get_cookie_name($config);
-    my $p = $self->_try_project($config,$req);
-    my $cookie = $self->_make_cookie($config,$p);
+    my $p           = $self->_try_project( $config, $req );
+    my $cookie      = $self->_make_cookie( $config, $p );
     $env->{'psgix.session'}->{$cookie_name} = $p;
-    
-    $self->response_cb($self->app->($env), sub {
-        my $res = shift;
-        
-        return unless defined $res->[2];
-        return if (Plack::Util::status_with_no_entity_body($res->[0]));
-    
-        my $h = Plack::Util::headers($res->[1]);
-        
-        $h->set('Set-Cookie', $cookie);
-    });
-} 
+
+    $self->response_cb(
+        $self->app->($env),
+        sub {
+            my $res = shift;
+
+            return unless defined $res->[2];
+            return if ( Plack::Util::status_with_no_entity_body( $res->[0] ) );
+
+            my $h = Plack::Util::headers( $res->[1] );
+
+            $h->set( 'Set-Cookie', $cookie );
+        }
+    );
+}
 
 sub _get_cookie_name {
-    my($self,$config)=@_;
+    my ( $self, $config ) = @_;
     return $config->{cookie_name} || $DEFAULT_COOKIE_NAME;
 }
 
 sub _try_project {
     my ( $self, $config, $req ) = @_;
     my $pname = $config->{param_name} || $DEFAULT_PARAM_NAME;
-    
+
     my $n = $req->param($pname);
-    unless ( $n ) {
+    unless ($n) {
         $pname = $config->{cookie_name} || $DEFAULT_COOKIE_NAME;
         my $cookies = $req->cookies;
         if ( $cookies->{$pname} ) {
@@ -56,9 +59,9 @@ sub _try_project {
 sub _make_cookie {
     my ( $self, $config, $p ) = @_;
     my $pname = $config->{cookie_name} || $DEFAULT_COOKIE_NAME;
-    if($p){
-        my $res = join '=',($pname,$p);
-        $res .= ';path=/'; 
+    if ($p) {
+        my $res = join '=', ( $pname, $p );
+        $res .= ';path=/';
         return $res;
     }
     return;

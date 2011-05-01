@@ -16,15 +16,15 @@ use URI;
 use URI::Escape ();
 
 sub _deprecated {
-    my $alt = shift;
-    my $method = (caller(1))[3];
+    my $alt    = shift;
+    my $method = ( caller(1) )[3];
     Carp::carp("$method is deprecated. Use '$alt' instead.");
 }
 
 sub new {
-    my($class, $env) = @_;
+    my ( $class, $env ) = @_;
     Carp::croak(q{$env is required})
-        unless defined $env && ref($env) eq 'HASH';
+      unless defined $env && ref($env) eq 'HASH';
 
     bless { env => $env }, $class;
 }
@@ -46,8 +46,8 @@ sub secure      { $_[0]->scheme eq 'https' }
 sub body        { $_[0]->env->{'psgi.input'} }
 sub input       { $_[0]->env->{'psgi.input'} }
 
-sub content_length   { $_[0]->env->{CONTENT_LENGTH} }
-sub content_type     { $_[0]->env->{CONTENT_TYPE} }
+sub content_length { $_[0]->env->{CONTENT_LENGTH} }
+sub content_type   { $_[0]->env->{CONTENT_TYPE} }
 
 sub session         { $_[0]->env->{'psgix.session'} }
 sub session_options { $_[0]->env->{'psgix.session.options'} }
@@ -55,21 +55,22 @@ sub logger          { $_[0]->env->{'psgix.logger'} }
 
 sub cookies {
     my $self = shift;
-    
+
     my $http_cookie;
-    foreach ( qw/HTTP_COOKIE HTTP_COOKIES/ ) {
+    foreach (qw/HTTP_COOKIE HTTP_COOKIES/) {
         if ( $self->env->{$_} ) {
             $http_cookie = $self->env->{$_};
             last;
         }
     }
-    unless ( $http_cookie ) {
-        return {}; 
+    unless ($http_cookie) {
+        return {};
     }
 
     # HTTP_COOKIE hasn't changed: reuse the parsed cookie
     if (   $self->env->{'plack.cookie.parsed'}
-        && $self->env->{'plack.cookie.string'} eq $http_cookie) {
+        && $self->env->{'plack.cookie.string'} eq $http_cookie )
+    {
         return $self->env->{'plack.cookie.parsed'};
     }
 
@@ -77,11 +78,14 @@ sub cookies {
 
     my %results;
     my @pairs = grep /=/, split "[;,] ?", $self->env->{'plack.cookie.string'};
-    for my $pair ( @pairs ) {
-        # trim leading trailing whitespace
-        $pair =~ s/^\s+//; $pair =~ s/\s+$//;
+    for my $pair (@pairs) {
 
-        my ($key, $value) = map URI::Escape::uri_unescape($_), split( "=", $pair, 2 );
+        # trim leading trailing whitespace
+        $pair =~ s/^\s+//;
+        $pair =~ s/\s+$//;
+
+        my ( $key, $value ) = map URI::Escape::uri_unescape($_),
+          split( "=", $pair, 2 );
 
         # Take the first one like CGI.pm or rack do
         $results{$key} = $value unless exists $results{$key};
@@ -92,20 +96,21 @@ sub cookies {
 
 sub query_parameters {
     my $self = shift;
-    $self->env->{'plack.request.query'} ||= Hash::MultiValue->new($self->uri->query_form);
+    $self->env->{'plack.request.query'} ||=
+      Hash::MultiValue->new( $self->uri->query_form );
 }
 
 sub content {
     my $self = shift;
 
-    unless ($self->env->{'psgix.input.buffered'}) {
+    unless ( $self->env->{'psgix.input.buffered'} ) {
         $self->_parse_request_body;
     }
 
-    my $fh = $self->input                 or return '';
-    my $cl = $self->env->{CONTENT_LENGTH} or return'';
-    $fh->read(my($content), $cl, 0);
-    $fh->seek(0, 0);
+    my $fh = $self->input or return '';
+    my $cl = $self->env->{CONTENT_LENGTH} or return '';
+    $fh->read( my ($content), $cl, 0 );
+    $fh->seek( 0, 0 );
 
     return $content;
 }
@@ -116,15 +121,15 @@ sub raw_body { $_[0]->content }
 
 sub headers {
     my $self = shift;
-    if (!defined $self->{headers}) {
+    if ( !defined $self->{headers} ) {
         my $env = $self->env;
         $self->{headers} = HTTP::Headers->new(
             map {
-                (my $field = $_) =~ s/^HTTPS?_//;
+                ( my $field = $_ ) =~ s/^HTTPS?_//;
                 ( $field => $env->{$_} );
-            }
-                grep { /^(?:HTTP|CONTENT|COOKIE)/i } keys %$env
-            );
+              }
+              grep { /^(?:HTTP|CONTENT|COOKIE)/i } keys %$env
+        );
     }
     $self->{headers};
 }
@@ -137,7 +142,7 @@ sub user_agent       { shift->headers->user_agent(@_) }
 sub body_parameters {
     my $self = shift;
 
-    unless ($self->env->{'plack.request.body'}) {
+    unless ( $self->env->{'plack.request.body'} ) {
         $self->_parse_request_body;
     }
 
@@ -151,14 +156,14 @@ sub parameters {
     $self->env->{'plack.request.merged'} ||= do {
         my $query = $self->query_parameters;
         my $body  = $self->body_parameters;
-        Hash::MultiValue->new($query->flatten, $body->flatten);
+        Hash::MultiValue->new( $query->flatten, $body->flatten );
     };
 }
 
 sub uploads {
     my $self = shift;
 
-    if ($self->env->{'plack.request.upload'}) {
+    if ( $self->env->{'plack.request.upload'} ) {
         return $self->env->{'plack.request.upload'};
     }
 
@@ -166,7 +171,7 @@ sub uploads {
     return $self->env->{'plack.request.upload'};
 }
 
-sub hostname     { _deprecated 'remote_host';      $_[0]->remote_host || $_[0]->address }
+sub hostname { _deprecated 'remote_host'; $_[0]->remote_host || $_[0]->address }
 sub url_scheme   { _deprecated 'scheme';           $_[0]->scheme }
 sub params       { _deprecated 'parameters';       shift->parameters(@_) }
 sub query_params { _deprecated 'query_parameters'; shift->query_parameters(@_) }
@@ -207,7 +212,7 @@ sub raw_uri {
     _deprecated 'base';
 
     my $base = $self->base;
-    $base->path_query($self->env->{REQUEST_URI});
+    $base->path_query( $self->env->{REQUEST_URI} );
 
     $base;
 }
@@ -226,18 +231,19 @@ sub uri {
     # http://github.com/miyagawa/Plack/issues#issue/118
     my $path_escape_class = '^A-Za-z0-9\-\._~/';
 
-    my $path = URI::Escape::uri_escape($self->env->{PATH_INFO} || '', $path_escape_class);
+    my $path = URI::Escape::uri_escape( $self->env->{PATH_INFO} || '',
+        $path_escape_class );
     $path .= '?' . $self->env->{QUERY_STRING}
-        if defined $self->env->{QUERY_STRING} && $self->env->{QUERY_STRING} ne '';
+      if defined $self->env->{QUERY_STRING} && $self->env->{QUERY_STRING} ne '';
 
     $base =~ s!/$!! if $path =~ m!^/!;
 
-    return URI->new($base . $path)->canonical;
+    return URI->new( $base . $path )->canonical;
 }
 
 sub base {
     my $self = shift;
-    URI->new($self->_uri_base)->canonical;
+    URI->new( $self->_uri_base )->canonical;
 }
 
 sub _uri_base {
@@ -245,10 +251,13 @@ sub _uri_base {
 
     my $env = $self->env;
 
-    my $uri = ($env->{'psgi.url_scheme'} || "http") .
-        "://" .
-        ($env->{HTTP_HOST} || (($env->{SERVER_NAME} || "") . ":" . ($env->{SERVER_PORT} || 80))) .
-        ($env->{SCRIPT_NAME} || '/');
+    my $uri =
+      ( $env->{'psgi.url_scheme'} || "http" ) . "://"
+      . (
+        $env->{HTTP_HOST}
+          || (( $env->{SERVER_NAME} || "" ) . ":"
+            . ( $env->{SERVER_PORT} || 80 ) )
+      ) . ( $env->{SCRIPT_NAME} || '/' );
 
     return $uri;
 }
@@ -264,14 +273,15 @@ sub _parse_request_body {
 
     my $ct = $self->env->{CONTENT_TYPE};
     my $cl = $self->env->{CONTENT_LENGTH};
-    if (!$ct && !$cl) {
+    if ( !$ct && !$cl ) {
+
         # No Content-Type nor Content-Length -> GET/HEAD
         $self->env->{'plack.request.body'}   = Hash::MultiValue->new;
         $self->env->{'plack.request.upload'} = Hash::MultiValue->new;
         return;
     }
 
-    my $body = HTTP::Body->new($ct, $cl);
+    my $body = HTTP::Body->new( $ct, $cl );
 
     # HTTP::Body will create temporary files in case there was an
     # upload.  Those temporary files can be cleaned up by telling
@@ -284,38 +294,43 @@ sub _parse_request_body {
     my $input = $self->input;
 
     my $buffer;
-    if ($self->env->{'psgix.input.buffered'}) {
+    if ( $self->env->{'psgix.input.buffered'} ) {
+
         # Just in case if input is read by middleware/apps beforehand
-        $input->seek(0, 0);
-    } else {
+        $input->seek( 0, 0 );
+    }
+    else {
         $buffer = Plack::TempBuffer->new($cl);
     }
 
     my $spin = 0;
     while ($cl) {
-        $input->read(my $chunk, $cl < 8192 ? $cl : 8192);
+        $input->read( my $chunk, $cl < 8192 ? $cl : 8192 );
         my $read = length $chunk;
         $cl -= $read;
         $body->add($chunk);
         $buffer->print($chunk) if $buffer;
 
-        if ($read == 0 && $spin++ > 2000) {
-            Carp::croak "Bad Content-Length: maybe client disconnect? ($cl bytes remaining)";
+        if ( $read == 0 && $spin++ > 2000 ) {
+            Carp::croak
+"Bad Content-Length: maybe client disconnect? ($cl bytes remaining)";
         }
     }
 
     if ($buffer) {
         $self->env->{'psgix.input.buffered'} = 1;
-        $self->env->{'psgi.input'} = $buffer->rewind;
-    } else {
-        $input->seek(0, 0);
+        $self->env->{'psgi.input'}           = $buffer->rewind;
+    }
+    else {
+        $input->seek( 0, 0 );
     }
 
-    $self->env->{'plack.request.body'}   = Hash::MultiValue->from_mixed($body->param);
+    $self->env->{'plack.request.body'} =
+      Hash::MultiValue->from_mixed( $body->param );
 
-    my @uploads = Hash::MultiValue->from_mixed($body->upload)->flatten;
+    my @uploads = Hash::MultiValue->from_mixed( $body->upload )->flatten;
     my @obj;
-    while (my($k, $v) = splice @uploads, 0, 2) {
+    while ( my ( $k, $v ) = splice @uploads, 0, 2 ) {
         push @obj, $k, $self->_make_upload($v);
     }
 
@@ -325,9 +340,9 @@ sub _parse_request_body {
 }
 
 sub _make_upload {
-    my($self, $upload) = @_;
+    my ( $self, $upload ) = @_;
     Plack::Request::Upload->new(
-        headers => HTTP::Headers->new( %{delete $upload->{headers}} ),
+        headers => HTTP::Headers->new( %{ delete $upload->{headers} } ),
         %$upload,
     );
 }

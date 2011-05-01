@@ -6,42 +6,39 @@ use Plack::Util;
 use Plack::Request;
 
 sub call {
-    my ($self,$env)  = @_;
-    
+    my ( $self, $env ) = @_;
+
     my $lang = $self->_try_lang($env);
-    
+
     if ( ref $env->{'psgix.session'} eq 'HASH' ) {
-        if($lang) {
+        if ($lang) {
             $env->{'psgix.session'}->{'lang'} = $lang;
             my $prefix = $self->{prefix};
             Plack::Util::load_class($prefix);
-            
+
             my $lh = $prefix->get_handle($lang);
-            
-            bless $lh, $prefix.'::'.$lang;
-            
-            use Data::Dumper;
-            print "$lang=".Dumper $lh;
-            
+
+            bless $lh, $prefix . '::' . $lang;
+
             $env->{'psgix.localize'} = $lh;
         }
     }
-    
-    $self->response_cb($self->app->($env), sub {});
-} 
+
+    $self->response_cb( $self->app->($env), sub { } );
+}
 
 sub _try_lang {
-    my ($self,$env)  = @_;
-    
+    my ( $self, $env ) = @_;
+
     my $lang = $env->{'psgix.session'}->{'lang'};
-    unless ( $lang ) {
+    unless ($lang) {
         my $req = Plack::Request->new($env);
         $lang = $req->param('lang');
         unless ($lang) {
             my $v = $env->{HTTP_ACCEPT_LANGUAGE};
-            ($lang) = split ',',$v;
-            if ($lang=~/-/) {
-                $lang = (split '-',$lang)[0];
+            ($lang) = split ',', $v;
+            if ( $lang =~ /-/ ) {
+                $lang = ( split '-', $lang )[0];
             }
         }
     }
