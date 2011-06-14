@@ -10,6 +10,14 @@ use Data::Dumper;
 __PACKAGE__->mk_accessors(
     qw(service_provider sp_param config formatter cache tt));
 
+sub prepare_app {
+    my $self = shift;
+    my $env  = shift;
+    $env->{'psgix.session.options'} = $self->{config}->{session};
+    $ENV{TMPDIR} = $self->{config}->{session}->{dir};
+    return;
+}
+
 sub call {
     my $self = shift;
     my $env  = shift;
@@ -18,9 +26,9 @@ sub call {
 
     #my $session = Plack::Session->new($env);
     my $sp_class;
-
+        
     if ( ref $self->{service_provider} ) {
-        $self->{service_provider}->load( $env->{'PATH_INFO'} );
+        $self->{service_provider}->load( $env->{'PATH_INFO'}, $req );
 
         if ( $self->{service_provider}->loaded_class ) {
             $sp_class = $self->{service_provider}->loaded_class;
@@ -37,7 +45,7 @@ sub call {
     if ( $self->{sp_param} ) {
         %hash = $self->{sp_param};
     }
-
+    
     my $rest = $sp->service_object(
         {
             config    => $self->{config},
