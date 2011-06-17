@@ -28,7 +28,7 @@ sub call {
     my $sp_class;
         
     if ( ref $self->{service_provider} ) {
-        $self->{service_provider}->load( $env->{'PATH_INFO'}, $req );
+        $self->{service_provider}->load( $env->{'PATH_INFO'}, $self->{config}->{app_name} );
 
         if ( $self->{service_provider}->loaded_class ) {
             $sp_class = $self->{service_provider}->loaded_class;
@@ -65,6 +65,8 @@ sub call {
     }
     $rest->env($env);
     $rest->request($req);
+    $rest->app_name($self->{config}->{app_name});
+    
     $rest->process;
 
     my $res = $req->new_response( $rest->status );
