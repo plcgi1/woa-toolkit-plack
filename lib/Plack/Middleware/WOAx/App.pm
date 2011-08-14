@@ -34,7 +34,7 @@ sub call {
             $sp_class = $self->{service_provider}->loaded_class;
         }
         else {
-            croak( $self->{service_provider}->error );
+            croak( $env->{'PATH_INFO'} . '  '. $self->{service_provider}->error );
         }
     }
     else {
@@ -57,6 +57,7 @@ sub call {
             log       => $self->{log},
             renderer  => $self->{renderer},
             request   => $req,
+            app_name  => $self->{config}->{app_name},
             %hash
         }
     );
@@ -65,7 +66,6 @@ sub call {
     }
     $rest->env($env);
     $rest->request($req);
-    $rest->app_name($self->{config}->{app_name});
     
     $rest->process;
 
@@ -85,12 +85,13 @@ sub call {
     if ( $rest->headers ) {
         $res->headers( $rest->headers );
     }
-
+    $env->{'psgix.session'} = $rest->backend->get_session;
+    
     #if ( $env->{'psgix.logger'} ) {
     #    $env->{'psgix.logger'}->({
     #        level   => 'info',
     #        module  => 'Plack.Middleware.WOAx.App',
-    #        message => '[REQUEST_AFTER_PROCESS] '.Dumper ($req->parameters)
+    #        message => '[SESSION_AFTER_PROCESS] '.Dumper ($env->{'psgix.session'})
     #    });
     #}
     return $res->finalize;
