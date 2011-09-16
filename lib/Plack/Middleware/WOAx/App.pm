@@ -87,13 +87,6 @@ sub call {
     }
     $env->{'psgix.session'} = $rest->backend->get_session;
     
-    #if ( $env->{'psgix.logger'} ) {
-    #    $env->{'psgix.logger'}->({
-    #        level   => 'info',
-    #        module  => 'Plack.Middleware.WOAx.App',
-    #        message => '[SESSION_AFTER_PROCESS] '.Dumper ($env->{'psgix.session'})
-    #    });
-    #}
     return $res->finalize;
 }
 

@@ -9,7 +9,6 @@ sub call {
     my ( $self, $env ) = @_;
 
     my $lang = $self->_try_lang($env);
-
     if ( ref $env->{'psgix.session'} eq 'HASH' ) {
         if ($lang) {
             $env->{'psgix.session'}->{'lang'} = $lang;
@@ -29,11 +28,11 @@ sub call {
 
 sub _try_lang {
     my ( $self, $env ) = @_;
+    my $req = Plack::Request->new($env);
+    my $lang = $req->param('lang');
 
-    my $lang = $env->{'psgix.session'}->{'lang'};
     unless ($lang) {
-        my $req = Plack::Request->new($env);
-        $lang = $req->param('lang');
+        $lang = $env->{'psgix.session'}->{'lang'};
         unless ($lang) {
             my $v = $env->{HTTP_ACCEPT_LANGUAGE};
             ($lang) = split ',', $v;
