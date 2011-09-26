@@ -56,6 +56,7 @@ sub call {
             env       => $env,
             log       => $self->{log},
             renderer  => $self->{renderer},
+            fast_storage  => $self->{fast_storage},
             request   => $req,
             app_name  => $self->{config}->{app_name},
             %hash
