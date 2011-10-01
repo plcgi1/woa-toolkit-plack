@@ -25,7 +25,7 @@ sub call {
     my $req = Plack::Request->new($env);
 
     #my $session = Plack::Session->new($env);
-    my $sp_class;
+    my ($sp_class,$cant_load_error);
         
     if ( ref $self->{service_provider} ) {
         $self->{service_provider}->load( $env->{'PATH_INFO'}, $self->{config}->{app_name} );
@@ -34,12 +34,35 @@ sub call {
             $sp_class = $self->{service_provider}->loaded_class;
         }
         else {
-            croak( $env->{'PATH_INFO'} . '  '. $self->{service_provider}->error );
+            $cant_load_error = 1;
         }
     }
     else {
         $sp_class = $self->{service_provider};
     }
+    my $res;
+    if ( $cant_load_error ) {
+        $res = $self->_error($req,$env->{'PATH_INFO'} . '  '. $self->{service_provider}->error );
+    }
+    else {
+        $res = $self->_success($sp_class,$env,$req);
+    }
+    
+    return $res->finalize;
+}
+
+# not found err
+sub _error {
+    my($self,$req,$error) = @_;
+    my $res = $req->new_response( 404 );
+    if ( $self->{default_locations}->{404} ) {
+        $res->headers( { Location => $self->{default_locations}->{404} } );
+    }
+    return $res;
+}
+
+sub _success {
+    my($self,$sp_class,$env,$req) = @_;
     my $sp = $sp_class->new( {}, $self->{sp_param} );
     my %hash;
     if ( $self->{sp_param} ) {
@@ -87,8 +110,9 @@ sub call {
         $res->headers( $rest->headers );
     }
     $env->{'psgix.session'} = $rest->backend->get_session;
+    $env->{'psgix.session'} ||= {};
     
-    return $res->finalize;
+    return $res;
 }
 
 1;
