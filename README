@@ -6,6 +6,7 @@ See the individual module documentation for more information
 INSTALLATION
 
 To install this module type the following:
+   get sources from https://github.com/plcgi1/woa-toolkit-plack
 
    perl Makefile.PL
    make
