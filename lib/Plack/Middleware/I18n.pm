@@ -22,6 +22,9 @@ sub call {
             $env->{'psgix.localize'} = $lh;
         }
     }
+    else {
+        warn '[YOU SHOULD USE Session] enable "I18n", prefix => "Your::Prefix"';
+    }
 
     $self->response_cb( $self->app->($env), sub { } );
 }

@@ -51,12 +51,44 @@ $app = builder {
 };
 test_psgi app => $app, client => sub {
     my $cb = shift;
-    my $h = HTTP::Headers->new('Cookies' => 'bla=ru;');
-    my $req = HTTP::Request->new('GET', 'http://localhost/version',$h);
-    
+
+    my $req = HTTP::Request->new();
+    $req->method('GET');
+    $req->uri('http://localhost/version');
+    $req->header('Cookie' => 'bla=ru;');
     my $res = $cb->($req);
 
     like $res->headers->{'set-cookie'}, '/bla=ru/','Check project cookies';
 };
 
+$app = builder {
+    enable "WOAx::Project";
+    mount "/version" => $app;
+};
+test_psgi app => $app, client => sub {
+    my $cb = shift;
+
+    my $req = HTTP::Request->new();
+    $req->method('GET');
+    $req->uri('http://localhost/version');
+    $req->header('Cookie' => 'prj=ru;');
+    my $res = $cb->($req);
+
+    like $res->headers->{'set-cookie'}, '/prj=ru/','Check project cookies';
+};
+
+$app = builder {
+    enable "WOAx::Project", config => { param_name => "par" };
+    mount "/version" => $app;
+};
+test_psgi app => $app, client => sub {
+    my $cb = shift;
+
+    my $req = HTTP::Request->new();
+    $req->method('GET');
+    $req->uri('http://localhost/version?par=PPP');
+    my $res = $cb->($req);
+
+    like $res->headers->{'set-cookie'}, '/prj=PPP/','Check project cookies';
+};
 done_testing;

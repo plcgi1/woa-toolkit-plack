@@ -10,11 +10,11 @@ use lib (
     $Bin.'/../lib',
 );
 use Plack::Middleware::WOAx::App;
-use WOAx::App::Test::REST::Simple::SP;
+use Test::WOAx::App::REST::Simple::SP;
 use WOA::REST::ServiceProvider::Loader;
 
 my $app = Plack::Middleware::WOAx::App->new({
-    service_provider    => 'WOAx::App::Test::REST::Simple::SP',
+    service_provider    => 'Test::WOAx::App::REST::Simple::SP',
     {}
 });
 
@@ -30,13 +30,13 @@ test_psgi app => $app, client => sub {
 };
 
 $app = Plack::Middleware::WOAx::App->new({
-    service_provider =>  WOA::REST::ServiceProvider::Loader->new,
+    service_provider =>  WOA::REST::ServiceProvider::Loader->new({rules => { path => '/version', class => 'Test::WOAx::App::REST::Simple::SP' }}),
 });
 
 test_psgi app => $app, client => sub {
     my $cb = shift;
     my $res = $cb->(HTTP::Request->new(GET => 'http://localhost/woax/test/rest/simple?what=thing'));
-    like $res->content, '/thing/';
+    like $res->{_rc}, '/404/';
 
 };
 done_testing;
