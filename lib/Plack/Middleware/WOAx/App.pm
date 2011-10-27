@@ -137,6 +137,16 @@ __END__
 
 []
 
+
+=head1 GIT repository
+
+=begin html
+
+https://github.com/plcgi1/woa-toolkit-plack
+
+=end html
+
+
 =head1 AUTHOR
 
 plcgi E<lt>plcgi1 at gmail dot com<gt>
