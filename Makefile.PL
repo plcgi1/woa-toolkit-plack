@@ -8,6 +8,7 @@ version '0.001';
 author 'plcgi1@gmail.com';
 license 'perl';
 
+requires 'HTTP::Exception';
 # Specific dependencies
 requires 'CGI::Cookie';
 requires 'Plack';

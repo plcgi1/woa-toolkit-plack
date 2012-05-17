@@ -6,6 +6,7 @@ use Plack::Request;
 use Plack::Session;
 use Carp qw(croak);
 use Data::Dumper;
+use HTTP::Exception;
 
 __PACKAGE__->mk_accessors(
     qw(service_provider sp_param config formatter cache tt));
@@ -54,11 +55,14 @@ sub call {
 # not found err
 sub _error {
     my($self,$req,$error) = @_;
-    my $res = $req->new_response( 404 );
-    if ( $self->{default_locations}->{404} ) {
-        $res->headers( { Location => $self->{default_locations}->{404} } );
-    }
-    return $res;
+    #my $res = $req->new_response( 404 );
+    #if ( $self->{default_locations}->{404} ) {
+    #    $res->headers( { Location => $self->{default_locations}->{404} } );
+    #}
+    #return $res;
+    my $e = HTTP::Exception->new(500);
+    $e->status_message($error);
+    $e->throw;
 }
 
 sub _success {
