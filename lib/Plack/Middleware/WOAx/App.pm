@@ -81,7 +81,7 @@ sub _success {
             session   => $env->{'psgix.session'},
             cache     => $self->{cache},
             env       => $env,
-            log       => $self->{log},
+            log       => $self->{log} || $env->{'psgix.logger'},
             renderer  => $self->{renderer},
             fast_storage  => $self->{fast_storage},
             request   => $req,
