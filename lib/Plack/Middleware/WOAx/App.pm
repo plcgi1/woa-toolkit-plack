@@ -9,7 +9,7 @@ use Data::Dumper;
 use HTTP::Exception;
 
 __PACKAGE__->mk_accessors(
-    qw(service_provider sp_param config formatter cache tt));
+    qw(service_provider sp_param config formatter cache tt error_handler));
 
 sub prepare_app {
     my $self = shift;
@@ -27,7 +27,8 @@ sub call {
 
     #my $session = Plack::Session->new($env);
     my ($sp_class,$cant_load_error);
-        
+    
+    $self->_set_path_info_to_env($env);    
     if ( ref $self->{service_provider} ) {
         $self->{service_provider}->load( $env->{'PATH_INFO'}, $self->{config}->{app_name} );
 
@@ -43,7 +44,7 @@ sub call {
     }
     my $res;
     if ( $cant_load_error ) {
-        $res = $self->_error($req,$env->{'PATH_INFO'} . '  '. $self->{service_provider}->error );
+        $res = $self->_error($req,$env->{'PATH_INFO'} . '  '. $self->{service_provider}->error,$self->{service_provider} );
     }
     else {
         $res = $self->_success($sp_class,$env,$req);
@@ -54,15 +55,23 @@ sub call {
 
 # not found err
 sub _error {
-    my($self,$req,$error) = @_;
+    my($self,$req,$error,$loader) = @_;
     #my $res = $req->new_response( 404 );
     #if ( $self->{default_locations}->{404} ) {
     #    $res->headers( { Location => $self->{default_locations}->{404} } );
     #}
     #return $res;
-    my $e = HTTP::Exception->new(500);
-    $e->status_message($error);
-    $e->throw;
+    #if ( $self->config->{default}->{locations}->{404} ) {
+    #    my $res = $req->new_response( 302 );
+    #    $res->headers( { Location => $self->config->{default}->{locations}->{404} } );
+    #    $res->{env}->{'psgix.logger'}({level => 'debug', message => $error });
+    #    return $res;
+    #}
+    #else {
+        my $e = HTTP::Exception->new(500);
+        $e->status_message($error);
+        $e->throw;
+    #}
 }
 
 sub _success {
@@ -117,6 +126,15 @@ sub _success {
     $env->{'psgix.session'} ||= {};
     
     return $res;
+}
+
+sub _set_path_info_to_env {
+    my($self,$env)=@_;
+    # $env->{'PATH_INFO'} in nginx-fcgi is empty by default
+    unless ( $env->{'PATH_INFO'} ) {
+        ($env->{'PATH_INFO'}) = split '\?',$env->{REQUEST_URI};     
+    }
+    return;
 }
 
 1;
